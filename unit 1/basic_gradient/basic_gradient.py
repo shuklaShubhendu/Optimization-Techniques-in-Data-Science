@@ -1,112 +1,116 @@
-# This program demonstrates gradient descent on the function f(v) = v^2.
-# It includes the following components:
-#
-# 1. Import Statements:
-#    - Import required libraries: numpy for numerical operations and matplotlib for plotting.
-#
-# 2. Gradient Descent Functions:
-#    - `gradient_descent`: Finds the final minimum position by iteratively adjusting the vector 
-#      based on the gradient, learning rate, and initial position.
-#    - `gradient_descent_collect`: Collects each vector position at each step, which is useful 
-#      for visualizing the gradient descent path.
-#    - `gradient_function`: Defines the gradient of the function f(v) = v^2, which is used 
-#      in the gradient descent calculations.
-#
-# 3. Parameters:
-#    - Starting position (start_value), learning rate (learning_rate), maximum iterations 
-#      (max_iterations), and tolerance (tolerance) are defined to control the gradient descent process.
-#
-# 4. Gradient Descent Execution:
-#    - `gradient_descent_collect` is called with the specified parameters to perform gradient 
-#      descent and collect each step's values for visualization.
-#
-# 5. Visualization:
-#    - A 2D plot is created to show the function f(v) = v^2 and the gradient descent path.
-#    - The plot includes:
-#      - The function f(v) = v^2 represented as a smooth curve.
-#      - Points indicating each step of the gradient descent process.
-#      - Labels, title, legend, and grid for readability.
-import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+from numpy.linalg import norm
+from matplotlib.animation import FuncAnimation
 
-def gradient_descent(gradient, start, learn_rate, n_iter):
-    vector = start
-    for _ in range(n_iter):
-        diff = -learn_rate * gradient(vector)
-        vector += diff
-    return vector
+# Rosenbrock function
+def func(x):
+    return 20 * (x[1] - x[0]**2)**2 + (1 - x[0])**2
 
-def gradient_descent_collect(gradient, start, learn_rate, n_iter, tolerance):
-    vector = start
-    history = [vector]
-    for _ in range(n_iter):
-        diff = -learn_rate * gradient(vector)
-        if np.all(np.abs(diff) <= tolerance):
+# Gradient of the Rosenbrock function using central difference
+def grad(x):
+    h = 1e-6
+    grad_value = np.zeros_like(x)
+    for i in range(len(x)):
+        x_forward = x.copy()
+        x_backward = x.copy()
+        x_forward[i] += h
+        x_backward[i] -= h
+        grad_value[i] = (func(x_forward) - func(x_backward)) / (2 * h)
+    return grad_value
+
+# Step size calculation using Backtracking line search
+def step_size(x, grad_x, alpha=1, beta=0.8):
+    func_x = func(x)
+    while func(x - alpha * grad_x) > func_x - 0.5 * alpha * norm(grad_x)**2:
+        alpha *= beta
+    return alpha
+
+# Gradient Descent Algorithm
+def gradient_descent(x_init, tol=1e-7):
+    x = np.array(x_init, dtype=float)
+    path_x, path_y, path_z = [x[0]], [x[1]], [func(x)]
+    prev_func_val = func(x)
+    iterations = 0
+    
+    while True:
+        grad_x = grad(x)
+        alpha = step_size(x, grad_x)
+        x -= alpha * grad_x
+        current_func_val = func(x)
+        path_x.append(x[0])
+        path_y.append(x[1])
+        path_z.append(current_func_val)  # Store the function value for 3D plotting
+        iterations += 1
+        
+        # Check for convergence
+        if abs(current_func_val - prev_func_val) < tol:
             break
-        vector += diff
-        history.append(vector)
-    return history
+        prev_func_val = current_func_val
 
-def gradient_function(v):
-    return 2 * v
+    return x, current_func_val, iterations, path_x, path_y, path_z
 
-# Parameters
-start_value = 10.0
-learning_rate = 0.2
-max_iterations = 50
-tolerance = 1e-06
+# Initial guess and running the gradient descent
+x_init = [0, 0]
+optimal_x, optimal_value, total_iterations, path_x, path_y, path_z = gradient_descent(x_init)
+print(f"Optimal Point: {optimal_x}")
+print(f"Optimal Value: {optimal_value}")
+print(f"Total Iterations: {total_iterations}")
 
-# Perform gradient descent and collect the path
-values = gradient_descent_collect(
-    gradient=gradient_function,
-    start=start_value,
-    learn_rate=learning_rate,
-    n_iter=max_iterations,
-    tolerance=tolerance
-)
+# Generate data for plotting
+x_vals = np.linspace(-0.5, 1.2, 100)
+y_vals = np.linspace(-0.5, 1.2, 100)
+X, Y = np.meshgrid(x_vals, y_vals)
+Z = 20 * (Y - X**2)**2 + (1 - X)**2
 
-# 2D Plot
-plt.figure(figsize=(10, 6))
-v_range = np.linspace(-10, 10, 400)
-plt.plot(v_range, v_range**2, label='f(v) = v^2', color='blue')
+# Set up the figure for 2D contour plot
+fig2d, ax1 = plt.subplots(figsize=(8, 6))
+contour = ax1.contour(X, Y, Z, levels=100, cmap='viridis')
+ax1.set_title("2D Contour Plot of Rosenbrock Function")
+ax1.set_xlabel("$x$")
+ax1.set_ylabel("$y$")
+fig2d.colorbar(contour, ax=ax1, label="Function Value")
 
-# Plot gradient descent path
-vectors = np.array(values)
-function_values = vectors**2
-plt.scatter(vectors, function_values, color='red', zorder=5, label='Gradient Descent Path', s=50)
+# Initialize the scatter plot for the optimization path
+scat2d = ax1.plot([], [], 'o-', color="blue", label="Optimization Path")[0]
+final_point2d = ax1.plot(optimal_x[0], optimal_x[1], 'ro', markersize=8, label="Final Point")[0]
 
-# Configure 2D plot
-plt.xlabel('Vector Value (v)')
-plt.ylabel('Function Value f(v) = v^2')
-plt.title('2D Visualization of Gradient Descent')
+# Animation function for 2D
+def update2d(frame):
+    scat2d.set_data(path_x[:frame+1], path_y[:frame+1])
+    return scat2d,
+
+# Create animation for 2D
+ani2d = FuncAnimation(fig2d, update2d, frames=len(path_x), blit=False, repeat=False)
+
+# Show the 2D plot
 plt.legend()
-plt.grid(True)
 plt.show()
 
-# Prepare data for 3D plot
-iterations = np.arange(len(values))  # x-axis: iteration number
-vectors = np.array(values)  # y-axis: vector values
-function_values = vectors**2  # z-axis: f(v) = v^2
+# Set up the figure for 3D surface plot
+fig3d = plt.figure(figsize=(14, 6))
+ax2 = fig3d.add_subplot(1, 1, 1, projection='3d')
+ax2.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none', alpha=0.8)
 
-# Create a 3D plot
-fig = plt.figure(figsize=(10, 8))
-ax = fig.add_subplot(111, projection='3d')
+# Initialize the scatter plot for the optimization path in 3D
+scat3d = ax2.scatter([], [], [], color='blue', marker='o', label="Optimization Path")
+final_point3d = ax2.scatter([optimal_x[0]], [optimal_x[1]], [optimal_value], color='red', s=100, label="Final Point")
 
-# Plot the surface (parabola f(v) = v^2)
-v_range = np.linspace(-10, 10, 100)
-V, I = np.meshgrid(v_range, iterations)
-Z = V**2
-ax.plot_surface(I, V, Z, cmap='viridis', alpha=0.6)
+# Set labels and title for 3D plot
+ax2.set_title("3D Surface Plot of Rosenbrock Function with Iteration Steps")
+ax2.set_xlabel("$x$")
+ax2.set_ylabel("$y$")
+ax2.set_zlabel("$f(x, y)$")
+ax2.legend()
 
-# Plot the gradient descent steps
-ax.scatter(iterations, vectors, function_values, color='r', s=50, label='Gradient Descent Path')
+# Animation function for 3D
+def update3d(frame):
+    scat3d._offsets3d = (path_x[:frame+1], path_y[:frame+1], path_z[:frame+1])
+    return scat3d,
 
-# Configure 3D plot
-ax.set_xlabel('Iterations')
-ax.set_ylabel('Vector Value (v)')
-ax.set_zlabel('Function Value f(v) = v^2')
-ax.set_title('3D Visualization of Gradient Descent')
+# Create animation for 3D
+ani3d = FuncAnimation(fig3d, update3d, frames=len(path_x), blit=False, repeat=False)
 
-plt.legend()
+# Show the 3D plot
 plt.show()
