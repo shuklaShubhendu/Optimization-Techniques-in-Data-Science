@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 def f(x):
     '''Objective function (Rosenbrock function)'''
@@ -35,22 +34,31 @@ def line_search(f, x, p, nabla):
     return a
 
 def BFGS(f, x0, max_it):
-    '''BFGS Quasi-Newton method implementation'''
+    '''BFGS Quasi-Newton method with dynamic 2D visualization'''
     d = len(x0)
     nabla = grad(f, x0)
     H = np.eye(d)
-    x = x0[:]
+    x = np.array(x0)
     it = 2
 
     # Store all iteration data for plotting
-    x_vals_for_plotting = []  # For 2D plotting
-    y_vals_for_plotting = []  # For 2D plotting
-    z_vals_for_plotting = []  # For 3D plotting
+    x_vals = [x[0]]  # For x-axis plotting
+    y_vals = [x[1]]  # For y-axis plotting
 
-    # Set up the figure for dynamic plotting
-    fig = plt.figure(figsize=(12, 6))
-    ax = fig.add_subplot(121)
-    ax3d = fig.add_subplot(122, projection='3d')
+    # Generate a contour plot grid
+    X, Y = np.meshgrid(np.linspace(-2, 2, 400), np.linspace(-1, 3, 400))
+    Z = np.array([f([x, y]) for x, y in zip(X.ravel(), Y.ravel())]).reshape(X.shape)
+
+    # Set up the plot
+    plt.figure(figsize=(10, 8))
+    plt.contour(X, Y, Z, levels=50, cmap='viridis')
+    path_plot, = plt.plot([], [], 'ro-', label='Optimization Path')
+    plt.xlabel('x[0]')
+    plt.ylabel('x[1]')
+    plt.title('Contour Plot of Rosenbrock Function with Optimization Path')
+    plt.legend()
+    plt.grid(True)
+    plt.pause(1)
 
     while np.linalg.norm(nabla) > 1e-5:  # While gradient is non-zero
         if it > max_it:
@@ -74,37 +82,19 @@ def BFGS(f, x0, max_it):
         x = x_new[:]
 
         # Store data for plotting
-        x_vals_for_plotting.append(x[0])
-        y_vals_for_plotting.append(x[1])
-        z_vals_for_plotting.append(f(x))
+        x_vals.append(x[0])
+        y_vals.append(x[1])
 
-        # Update 2D plot
-        ax.clear()
-        ax.plot(range(len(x_vals_for_plotting)), z_vals_for_plotting, marker='o', color='b', label='f(x) over iterations')
-        ax.set_xlabel('Iterations')
-        ax.set_ylabel('f(x)')
-        ax.set_title(f'2D Plot: Objective function value vs Iterations (Iteration {it})')
-        ax.grid(True)
-        ax.legend()
+        # Update path plot dynamically
+        path_plot.set_data(x_vals, y_vals)
+        plt.scatter(x[0], x[1], color='blue')  # Highlight the current point
+        plt.pause(0.5)  # Pause for visualization
 
-        # Update 3D plot
-        ax3d.clear()
-        ax3d.plot(x_vals_for_plotting, y_vals_for_plotting, z_vals_for_plotting, marker='o', color='r', label='Path of Optimization')
-        ax3d.set_xlabel('x[0]')
-        ax3d.set_ylabel('x[1]')
-        ax3d.set_zlabel('f(x)')
-        ax3d.set_title(f'3D Plot: Path of Optimization (Iteration {it})')
-        ax3d.legend()
-
-        # Draw and pause to update the plot
-        plt.draw()
-        plt.pause(0.1)  # Pause for 100ms to update the plot
-
-    plt.show()
+    # plt.show()
 
     # Return the optimal x found by BFGS
     return x
 
-# Run the optimization and plot
+# Run the optimization and visualize
 x_opt = BFGS(f, [-1.2, 1], 100)
 print("Optimal x:", x_opt)
