@@ -98,6 +98,6 @@ This project is licensed under the MIT License. Feel free to use, modify, and di
 Have questions or feedback? Feel free to reach out:
 
 Name: Shubhendu Shukla
-Email: your.email@example.com
+Email: shuklashubhendu6@gmail.com
 GitHub: @shuklaShubhendu
 Thank you for exploring my project! 😊
