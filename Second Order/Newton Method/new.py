@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation, PillowWriter
-
+#hi this is small test change
 EPSILON = 0.0001
 
 class NewtonMethod:
@@ -119,4 +119,5 @@ newton_method = NewtonMethod(alpha=0.01, damp_factor=0.1)
 
 # Run optimization with path plotting enabled
 result, path = newton_method.optimize(initial_point, lambda x: rosenbrock_grad(x), rosenbrock_grad, rosenbrock_hessian, is_plot=True)
+
 
