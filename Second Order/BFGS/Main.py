@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+#SHUBHENDU SHUKLA
 def f(x):
     '''Objective function (Rosenbrock function)'''
     d = len(x)
