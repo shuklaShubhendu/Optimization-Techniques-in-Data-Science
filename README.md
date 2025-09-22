@@ -89,7 +89,7 @@ This project is the culmination of my individual efforts, reflecting my growth a
 Adding additional benchmark functions for broader comparisons.
 Implementing other advanced optimization algorithms like L-BFGS and Simulated Annealing.
 Extending visualizations to interactive web-based platforms using Plotly Dash or Streamlit.
-
+Why they dont see any changes appmod
 
 ## License 📜
 This project is licensed under the MIT License. Feel free to use, modify, and distribute the code with proper attribution.
